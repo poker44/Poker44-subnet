@@ -86,13 +86,13 @@ def add_args(cls, parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--neuron.burn_fraction",
         type=float,
-        default=float(os.getenv("POKER44_BURN_FRACTION", "0.00")),
+        default=float(os.getenv("POKER44_BURN_FRACTION", "1.00")),
         help="Fraction assigned to the live subnet owner hotkey.",
     )
     parser.add_argument(
         "--neuron.funding_fraction",
         type=float,
-        default=float(os.getenv("POKER44_FUNDING_FRACTION", "0.05")),
+        default=float(os.getenv("POKER44_FUNDING_FRACTION", "0.00")),
         help="Fraction assigned to the tournament-funding hotkey.",
     )
     parser.add_argument(
@@ -207,8 +207,8 @@ def _ensure_neuron_config(config: bt.Config) -> None:
         "wait_for_finalization": True,
         "num_concurrent_forwards": int(os.getenv("NEURON_NUM_CONCURRENT_FORWARDS", "1")),
         "timeout": float(os.getenv("NEURON_TIMEOUT", "180")),
-        "burn_fraction": float(os.getenv("POKER44_BURN_FRACTION", "0.00")),
-        "funding_fraction": float(os.getenv("POKER44_FUNDING_FRACTION", "0.05")),
+        "burn_fraction": float(os.getenv("POKER44_BURN_FRACTION", "1.00")),
+        "funding_fraction": float(os.getenv("POKER44_FUNDING_FRACTION", "0.00")),
         "funding_hotkey": os.getenv(
             "POKER44_FUNDING_HOTKEY",
             DEFAULT_FUNDING_HOTKEY,

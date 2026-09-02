@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.11 - 2026-09-02
+
+- Set the protocol allocation to 100% burn, with 0% tournament funding and
+  0% winner emissions.
+- Migrate persisted validator allocation values to the network-wide full-burn
+  policy during auto-update.
+
 ## 0.2.10 - 2026-08-14
 
 - Reissue the validator deployment gate so healthy `main` auto-update watchers

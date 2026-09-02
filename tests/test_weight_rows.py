@@ -31,8 +31,9 @@ def test_no_positive_finite_score_has_no_winner():
     assert winner_uid([evaluation(1, 0.0), evaluation(2, float("nan"))]) is None
 
 
-def test_default_burn_fraction_is_zero(monkeypatch):
+def test_default_allocation_is_full_burn(monkeypatch):
     monkeypatch.delenv("POKER44_BURN_FRACTION", raising=False)
+    monkeypatch.delenv("POKER44_FUNDING_FRACTION", raising=False)
     config = SimpleNamespace(
         neuron=SimpleNamespace(),
         netuid=126,
@@ -42,7 +43,23 @@ def test_default_burn_fraction_is_zero(monkeypatch):
 
     _ensure_neuron_config(config)
 
-    assert config.neuron.burn_fraction == 0.0
+    assert config.neuron.burn_fraction == 1.0
+    assert config.neuron.funding_fraction == 0.0
+
+
+def test_full_burn_allocation_assigns_everything_to_owner():
+    scores = emission_scores(
+        10,
+        winner_uid=2,
+        owner_uid=0,
+        funding_uid=7,
+        burn_fraction=1.00,
+        funding_fraction=0.00,
+    )
+    assert np.isclose(scores[0], 1.00)
+    assert np.isclose(scores[7], 0.00)
+    assert np.isclose(scores[2], 0.00)
+    assert np.isclose(scores.sum(), 1.0)
 
 
 def test_transition_allocation_is_0_burn_5_funding_95_winner():

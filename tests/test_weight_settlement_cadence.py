@@ -221,6 +221,51 @@ async def test_recorded_target_is_rebuilt_for_active_allocation(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_recorded_target_is_rebuilt_for_full_burn_allocation(tmp_path):
+    harness = _harness(tmp_path, current_block=500)
+    harness.config.neuron.burn_fraction = 1.0
+    harness.config.neuron.funding_fraction = 0.0
+    harness._emission_target = AsyncMock(
+        return_value=(
+            np.asarray([1.0, 0.0, 0.0], dtype=np.float32),
+            {
+                "owner": {"uid": 0},
+                "funding": {"uid": 1},
+                "winner": {"uid": 2},
+            },
+        )
+    )
+    harness.prepare_weights = Mock(
+        return_value=(
+            np.asarray([0, 1, 2]),
+            np.asarray([1.0, 0.0, 0.0], dtype=np.float32),
+            np.asarray([0]),
+            np.asarray([65535]),
+        )
+    )
+    harness.metagraph.hotkeys = ["owner", "funding", "winner"]
+    state = {
+        "version": 4,
+        "dirty": False,
+        "window_id": "window-1",
+        "round_id": "round-1",
+        "weights": [
+            {"uid": 1, "hotkey": "funding", "weight": 0.05, "roles": ["funding"]},
+            {"uid": 2, "hotkey": "winner", "weight": 0.95, "roles": ["winner"]},
+        ],
+    }
+
+    updated = await ValidatorSettlementMixin._align_settlement_target_allocation(
+        harness, state
+    )
+
+    assert updated["dirty"] is True
+    assert updated["weights"] == [
+        {"uid": 0, "weight": pytest.approx(1.0), "hotkey": "owner", "roles": ["owner"]}
+    ]
+
+
+@pytest.mark.asyncio
 async def test_dirty_weights_remain_pending_until_chain_rate_limit_allows(tmp_path):
     harness = _harness(tmp_path, current_block=100, rate_limit=100)
     harness._save_weight_settlement(

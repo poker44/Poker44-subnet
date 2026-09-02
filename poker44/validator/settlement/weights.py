@@ -13,8 +13,8 @@ def winner_fraction(burn_fraction: float, funding_fraction: float) -> float:
     if not np.all(np.isfinite(fractions)) or np.any(fractions < 0.0):
         raise ValueError("emission fractions must be finite and non-negative")
     remaining = 1.0 - float(fractions.sum())
-    if remaining <= 0.0:
-        raise ValueError("burn and funding fractions must leave a positive winner reward")
+    if remaining < 0.0:
+        raise ValueError("burn and funding fractions cannot exceed total emissions")
     return remaining
 
 

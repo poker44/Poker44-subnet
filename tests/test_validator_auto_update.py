@@ -88,20 +88,24 @@ def test_validator_runner_enables_the_watcher_by_default() -> None:
     assert 'pm2 start bash --name "$AUTO_UPDATE_PM2_NAME"' in runner
 
 
-def migrated_burn(value: str, env_file: Path) -> str:
+def migrated_allocation(burn: str, funding: str, env_file: Path) -> str:
     result = subprocess.run(
         [
             "bash",
             "-c",
             (
                 'source "$1"; migrate_transition_burn_default "$2" >/dev/null; '
-                'printf "%s" "$POKER44_BURN_FRACTION"'
+                'printf "%s,%s" "$POKER44_BURN_FRACTION" "$POKER44_FUNDING_FRACTION"'
             ),
             "burn-migration",
             str(ENV_MIGRATION),
             str(env_file),
         ],
-        env={**os.environ, "POKER44_BURN_FRACTION": value},
+        env={
+            **os.environ,
+            "POKER44_BURN_FRACTION": burn,
+            "POKER44_FUNDING_FRACTION": funding,
+        },
         check=True,
         text=True,
         capture_output=True,
@@ -109,28 +113,33 @@ def migrated_burn(value: str, env_file: Path) -> str:
     return result.stdout
 
 
-def test_update_migrates_inherited_and_persisted_legacy_burn(tmp_path: Path) -> None:
+def test_update_enforces_full_burn_for_implicit_and_persisted_values(tmp_path: Path) -> None:
     implicit_env = tmp_path / "implicit.env"
     implicit_env.write_text("POKER44_POLL_INTERVAL_SECONDS=300\n", encoding="utf-8")
     explicit_env = tmp_path / "explicit.env"
-    explicit_env.write_text("POKER44_BURN_FRACTION=0.30\n", encoding="utf-8")
-
-    assert migrated_burn("0.90", implicit_env) == "0.00"
-    assert migrated_burn("0.70", implicit_env) == "0.00"
-    assert migrated_burn("0.30", implicit_env) == "0.00"
-    assert migrated_burn("0.30", explicit_env) == "0.00"
-    assert "POKER44_BURN_FRACTION=0.00" in explicit_env.read_text(encoding="utf-8")
-    assert explicit_env.stat().st_mode & 0o777 == 0o600
-    assert migrated_burn("0.80", implicit_env) == "0.80"
-
-
-def test_update_migrates_quoted_persisted_legacy_burn(tmp_path: Path) -> None:
-    explicit_env = tmp_path / "quoted.env"
     explicit_env.write_text(
-        'export POKER44_BURN_FRACTION="0.30"\n', encoding="utf-8"
+        "POKER44_BURN_FRACTION=0.30\nPOKER44_FUNDING_FRACTION=0.05\n",
+        encoding="utf-8",
     )
 
-    assert migrated_burn("0.30", explicit_env) == "0.00"
+    assert migrated_allocation("0.00", "0.05", implicit_env) == "1.00,0.00"
+    assert migrated_allocation("0.30", "0.05", explicit_env) == "1.00,0.00"
+    contents = explicit_env.read_text(encoding="utf-8")
+    assert "POKER44_BURN_FRACTION=1.00" in contents
+    assert "POKER44_FUNDING_FRACTION=0.00" in contents
+    assert explicit_env.stat().st_mode & 0o777 == 0o600
+
+
+def test_update_replaces_quoted_persisted_allocation(tmp_path: Path) -> None:
+    explicit_env = tmp_path / "quoted.env"
+    explicit_env.write_text(
+        'export POKER44_BURN_FRACTION="0.30"\n'
+        "export POKER44_FUNDING_FRACTION='0.05'\n",
+        encoding="utf-8",
+    )
+
+    assert migrated_allocation("0.30", "0.05", explicit_env) == "1.00,0.00"
     assert explicit_env.read_text(encoding="utf-8") == (
-        "export POKER44_BURN_FRACTION=0.00\n"
+        "POKER44_BURN_FRACTION=1.00\n"
+        "POKER44_FUNDING_FRACTION=0.00\n"
     )
