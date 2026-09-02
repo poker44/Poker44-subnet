@@ -1,6 +1,6 @@
 # Validator
 
-Poker44 subnet release `0.2.11` has one evaluation path: manually published
+Poker44 subnet release `0.2.12` has one evaluation path: manually published
 schema-v4.1 tournament micro-sessions derived from consented telemetry. There
 is no legacy hand JSON track, EMA, GitHub/model-repository check, W&B
 integration or coldkey-level hotkey restriction.
@@ -143,7 +143,7 @@ instead of being stashed or overwritten. Validator secrets remain in the local
 environment and `.env`; the watcher never runs with shell xtrace.
 
 The script defaults to Finney netuid 126, one concurrent forward and deploy
-version `0.2.11`. For the current rollout set `TARGET_BRANCH=main` before
+version `0.2.12`. For the current rollout set `TARGET_BRANCH=main` before
 deployment. Then run:
 
 ```bash

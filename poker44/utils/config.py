@@ -12,6 +12,8 @@ import bittensor as bt
 traceback.format_exc()
 
 DEFAULT_FUNDING_HOTKEY = "5DUYX7X2Z9Jizr1NABUFDYV7ruFVNcUmKdxw9HxVP3sN9RUD"
+PROTOCOL_BURN_FRACTION = 1.0
+PROTOCOL_FUNDING_FRACTION = 0.0
 
 
 def add_args(cls, parser: argparse.ArgumentParser) -> None:
@@ -86,13 +88,13 @@ def add_args(cls, parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--neuron.burn_fraction",
         type=float,
-        default=float(os.getenv("POKER44_BURN_FRACTION", "1.00")),
+        default=PROTOCOL_BURN_FRACTION,
         help="Fraction assigned to the live subnet owner hotkey.",
     )
     parser.add_argument(
         "--neuron.funding_fraction",
         type=float,
-        default=float(os.getenv("POKER44_FUNDING_FRACTION", "0.00")),
+        default=PROTOCOL_FUNDING_FRACTION,
         help="Fraction assigned to the tournament-funding hotkey.",
     )
     parser.add_argument(
@@ -207,8 +209,8 @@ def _ensure_neuron_config(config: bt.Config) -> None:
         "wait_for_finalization": True,
         "num_concurrent_forwards": int(os.getenv("NEURON_NUM_CONCURRENT_FORWARDS", "1")),
         "timeout": float(os.getenv("NEURON_TIMEOUT", "180")),
-        "burn_fraction": float(os.getenv("POKER44_BURN_FRACTION", "1.00")),
-        "funding_fraction": float(os.getenv("POKER44_FUNDING_FRACTION", "0.00")),
+        "burn_fraction": PROTOCOL_BURN_FRACTION,
+        "funding_fraction": PROTOCOL_FUNDING_FRACTION,
         "funding_hotkey": os.getenv(
             "POKER44_FUNDING_HOTKEY",
             DEFAULT_FUNDING_HOTKEY,
@@ -218,6 +220,11 @@ def _ensure_neuron_config(config: bt.Config) -> None:
     for key, value in defaults.items():
         if not hasattr(config.neuron, key) or getattr(config.neuron, key) is None:
             setattr(config.neuron, key, value)
+
+    # Release-wide emission policy: stale PM2/.env values from an earlier
+    # deployment must not override the active network allocation.
+    config.neuron.burn_fraction = PROTOCOL_BURN_FRACTION
+    config.neuron.funding_fraction = PROTOCOL_FUNDING_FRACTION
 
     if not hasattr(config, "netuid") or config.netuid is None:
         config.netuid = int(os.getenv("NETUID", "126"))

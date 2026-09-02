@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.12 - 2026-09-02
+
+- Enforce the full-burn allocation in the validator configuration layer so
+  stale process environment values cannot override the active policy during
+  the first auto-update restart.
+
 ## 0.2.11 - 2026-09-02
 
 - Set the protocol allocation to 100% burn, with 0% tournament funding and

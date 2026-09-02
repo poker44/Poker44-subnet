@@ -47,6 +47,22 @@ def test_default_allocation_is_full_burn(monkeypatch):
     assert config.neuron.funding_fraction == 0.0
 
 
+def test_protocol_allocation_overrides_stale_environment(monkeypatch):
+    monkeypatch.setenv("POKER44_BURN_FRACTION", "0.00")
+    monkeypatch.setenv("POKER44_FUNDING_FRACTION", "0.05")
+    config = SimpleNamespace(
+        neuron=SimpleNamespace(burn_fraction=0.0, funding_fraction=0.05),
+        netuid=126,
+        wallet=SimpleNamespace(name="validator", hotkey="validator", path="/tmp"),
+        subtensor=SimpleNamespace(network="finney"),
+    )
+
+    _ensure_neuron_config(config)
+
+    assert config.neuron.burn_fraction == 1.0
+    assert config.neuron.funding_fraction == 0.0
+
+
 def test_full_burn_allocation_assigns_everything_to_owner():
     scores = emission_scores(
         10,
